@@ -561,6 +561,7 @@ def process_generation(_sd_type,_model_type,_upload_images, _num_steps,style_nam
     if start_merge_step > 30:
         start_merge_step = 30
     print(f"start_merge_step:{start_merge_step}")
+    device = devicetorch.get(torch)
     generator = torch.Generator(device=device).manual_seed(seed_)
     sa32, sa64 =  sa32_, sa64_
     id_length = id_length_
