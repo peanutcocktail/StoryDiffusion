@@ -1,7 +1,7 @@
 from email.policy import default
 import gradio as gr
 import numpy as np
-import spaces
+#import spaces
 import torch
 import requests
 import random
@@ -31,6 +31,7 @@ from huggingface_hub import hf_hub_download
 from diffusers.utils import load_image
 from utils.utils import get_comic
 from utils.style_template import styles
+import devicetorch
 image_encoder_path = "./data/models/ip_adapter/sdxl_models/image_encoder"
 ip_ckpt = "./data/models/ip_adapter/sdxl_models/ip-adapter_sdxl_vit-h.bin"
 os.environ["no_proxy"] = "localhost,127.0.0.1,::1"
@@ -416,7 +417,8 @@ cur_step = 0
 id_length = 4
 total_length = 5
 cur_model_type = ""
-device="cuda"
+#device="cuda"
+device = devicetorch.get(torch)
 global attn_procs,unet
 attn_procs = {}
 ###
@@ -432,21 +434,21 @@ sd_model_path = models_dict["Unstable"]#"SG161222/RealVisXL_V4.0"
 use_safetensors= False
 ### LOAD Stable Diffusion Pipeline
 pipe1 = StableDiffusionXLPipeline.from_pretrained(sd_model_path, torch_dtype=torch.float16, use_safetensors= use_safetensors)
-pipe1 = pipe1.to("cuda")
+pipe1 = pipe1.to(device)
 pipe1.enable_freeu(s1=0.6, s2=0.4, b1=1.1, b2=1.2)
 # pipe.scheduler = DDIMScheduler.from_config(pipe.scheduler.config)
 pipe1.scheduler.set_timesteps(50)
 ### 
 pipe2 = PhotoMakerStableDiffusionXLPipeline.from_pretrained(
     sd_model_path, torch_dtype=torch.float16, use_safetensors=use_safetensors)
-pipe2 = pipe2.to("cuda")
+pipe2 = pipe2.to(device)
 pipe2.load_photomaker_adapter(
     os.path.dirname(photomaker_path),
     subfolder="",
     weight_name=os.path.basename(photomaker_path),
     trigger_word="img"  # define the trigger word
 )
-pipe2 = pipe2.to("cuda")
+pipe2 = pipe2.to(device)
 pipe2.enable_freeu(s1=0.6, s2=0.4, b1=1.1, b2=1.2)
 pipe2.fuse_lora()
 
@@ -482,7 +484,7 @@ def change_visiale_by_model_type(_model_type):
 
 
 ######### Image Generation ##############
-@spaces.GPU
+#@spaces.GPU
 def process_generation(_sd_type,_model_type,_upload_images, _num_steps,style_name, _Ip_Adapter_Strength ,_style_strength_ratio, guidance_scale, seed_,  sa32_, sa64_, id_length_,  general_prompt, negative_prompt,prompt_array,G_height,G_width,_comic_type):
     _model_type = "Photomaker" if _model_type == "Using Ref Images" else "original"
     if _model_type == "Photomaker" and "img" not in general_prompt:
@@ -521,7 +523,7 @@ def process_generation(_sd_type,_model_type,_upload_images, _num_steps,style_nam
     if start_merge_step > 30:
         start_merge_step = 30
     print(f"start_merge_step:{start_merge_step}")
-    generator = torch.Generator(device="cuda").manual_seed(seed_)
+    generator = torch.Generator(device=device).manual_seed(seed_)
     sa32, sa64 =  sa32_, sa64_
     id_length = id_length_
     clipped_prompts = prompts[:]
@@ -530,7 +532,8 @@ def process_generation(_sd_type,_model_type,_upload_images, _num_steps,style_nam
     print(prompts)
     id_prompts = prompts[:id_length]
     real_prompts = prompts[id_length:]
-    torch.cuda.empty_cache()
+    devicetorch.empty_cache(torch)
+    #torch.cuda.empty_cache()
     write = True
     cur_step = 0
 

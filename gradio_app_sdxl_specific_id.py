@@ -29,6 +29,7 @@ import os
 from diffusers.utils import load_image
 from utils.utils import get_comic
 from utils.style_template import styles
+import devicetorch
 image_encoder_path = "./data/models/ip_adapter/sdxl_models/image_encoder"
 ip_ckpt = "./data/models/ip_adapter/sdxl_models/ip-adapter_sdxl_vit-h.bin"
 os.environ["no_proxy"] = "localhost,127.0.0.1,::1"
@@ -426,7 +427,8 @@ cur_step = 0
 id_length = 4
 total_length = 5
 cur_model_type = ""
-device="cuda"
+device = devicetorch.get(torch)
+#device="cuda"
 global attn_procs,unet
 attn_procs = {}
 ###
@@ -559,7 +561,7 @@ def process_generation(_sd_type,_model_type,_upload_images, _num_steps,style_nam
     if start_merge_step > 30:
         start_merge_step = 30
     print(f"start_merge_step:{start_merge_step}")
-    generator = torch.Generator(device="cuda").manual_seed(seed_)
+    generator = torch.Generator(device=device).manual_seed(seed_)
     sa32, sa64 =  sa32_, sa64_
     id_length = id_length_
     clipped_prompts = prompts[:]
@@ -568,7 +570,8 @@ def process_generation(_sd_type,_model_type,_upload_images, _num_steps,style_nam
     print(prompts)
     id_prompts = prompts[:id_length]
     real_prompts = prompts[id_length:]
-    torch.cuda.empty_cache()
+    devicetorch.empty_cache(torch)
+    #torch.cuda.empty_cache()
     write = True
     cur_step = 0
 
