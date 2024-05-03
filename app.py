@@ -310,7 +310,8 @@ def set_attention_processor(unet,id_length,is_ipadapter = False):
             hidden_size = unet.config.block_out_channels[block_id]
         if cross_attention_dim is None:
             if name.startswith("up_blocks") :
-                attn_procs[name] = SpatialAttnProcessor2_0(id_length = id_length)
+                device = devicetorch.get(torch)
+                attn_procs[name] = SpatialAttnProcessor2_0(id_length = id_length, device=device)
                 total_count +=1
             else:    
                 attn_procs[name] = AttnProcessor()
